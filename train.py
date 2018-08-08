@@ -41,9 +41,9 @@ def _main(args):
     early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=1)
 
     with open(annotation_path_train) as f:
-        train_lines = f.readlines()
+        train_lines = [args.images_dir + '/' + l for l in f.readlines()]
     with open(annotation_path_val) as f:
-        val_lines = f.readlines()
+        val_lines = [args.images_dir + '/' + l for l in f.readlines()]
     num_val = int(len(val_lines))
     num_train = len(train_lines)
 
@@ -192,6 +192,7 @@ if __name__ == '__main__':
     parser.add_argument('--image_list_train', required=True)
     parser.add_argument('--image_list_val', required=True)
     parser.add_argument('--logs_dir', type=str, required=True)
+    parser.add_argument('--images_dir', type=str, required=True)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--freeze_backbone', action='store_true')
     _main(parser.parse_args())
