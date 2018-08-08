@@ -29,10 +29,10 @@ def _main(args):
     is_tiny_version = len(anchors)==6 # default setting
     if is_tiny_version:
         model = create_tiny_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path=r'model_data\rtiny_yolo_weights.h5')
+            freeze_body=2, weights_path=args.weights_path)
     else:
         model = create_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path=r'model_data\yolo_weights.h5') # make sure you know what you freeze
+            freeze_body=2, weights_path=args.weights_path) # make sure you know what you freeze
 
     logging = TensorBoard(log_dir=log_dir)
     checkpoint = ModelCheckpoint(log_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
@@ -193,6 +193,7 @@ if __name__ == '__main__':
     parser.add_argument('--image_list_val', required=True)
     parser.add_argument('--logs_dir', type=str, required=True)
     parser.add_argument('--images_dir', type=str, required=True)
+    parser.add_argument('--weights_path', type=str, required=True)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--freeze_backbone', action='store_true')
     _main(parser.parse_args())
