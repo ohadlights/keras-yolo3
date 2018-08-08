@@ -10,6 +10,7 @@ from keras.layers import Input, Lambda
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
+from keras.utils.training_utils import multi_gpu_model
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
@@ -19,8 +20,8 @@ def _main(args):
     annotation_path_train = args.image_list_train
     annotation_path_val = args.image_list_val
     log_dir = args.logs_dir
-    classes_path = r'model_data/oid_classes.txt'
-    anchors_path = r'model_data/yolo_anchors.txt'
+    classes_path = args.classes_path
+    anchors_path = args.anchors_path
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
     anchors = get_anchors(anchors_path)
@@ -34,6 +35,8 @@ def _main(args):
     else:
         model = create_model(input_shape, anchors, num_classes,
             freeze_body=2, weights_path=args.weights_path) # make sure you know what you freeze
+    if args.num_gpus > 1:
+        model = multi_gpu_model(model, gpus=args.num_gpus)
 
     logging = TensorBoard(log_dir=log_dir)
     checkpoint = ModelCheckpoint(log_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
@@ -197,7 +200,10 @@ if __name__ == '__main__':
     parser.add_argument('--logs_dir', type=str, required=True)
     parser.add_argument('--images_dir', type=str, required=True)
     parser.add_argument('--weights_path', type=str, required=True)
+    parser.add_argument('--anchors_path', type=str, required=True)
+    parser.add_argument('--classes_path', default='model_data/oid_classes.txt')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--freeze_backbone', action='store_true')
     parser.add_argument('--workers', type=int, default=8)
+    parser.add_argument('--num_gpus', type=int, default=1)
     _main(parser.parse_args())
