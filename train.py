@@ -68,6 +68,7 @@ def _main(args):
                             epochs=50,
                             initial_epoch=0,
                             workers=args.workers,
+                            use_multiprocessing=args.use_multiprocessing,
                             callbacks=[logging, checkpoint])
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
 
@@ -87,6 +88,7 @@ def _main(args):
                             epochs=100,
                             initial_epoch=50,
                             workers=args.workers,
+                            use_multiprocessing=args.use_multiprocessing,
                             callbacks=[logging, checkpoint, reduce_lr, early_stopping])
         model.save_weights(log_dir + 'trained_weights_final.h5')
 
@@ -205,5 +207,6 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--freeze_backbone', action='store_true')
     parser.add_argument('--workers', type=int, default=8)
+    parser.add_argument('--use_multiprocessing', action='store_true')
     parser.add_argument('--num_gpus', type=int, default=1)
     _main(parser.parse_args())
