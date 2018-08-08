@@ -4,6 +4,7 @@ Retrain the YOLO model for your own dataset.
 
 import argparse
 import numpy as np
+
 import keras.backend as K
 from keras.layers import Input, Lambda
 from keras.models import Model
@@ -58,12 +59,13 @@ def _main(args):
 
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
         model.fit_generator(data_generator_wrapper(train_lines, batch_size, input_shape, anchors, num_classes),
-                steps_per_epoch=max(1, num_train//batch_size),
-                validation_data=data_generator_wrapper(val_lines, batch_size, input_shape, anchors, num_classes),
-                validation_steps=max(1, num_val//batch_size),
-                epochs=50,
-                initial_epoch=0,
-                callbacks=[logging, checkpoint])
+                            steps_per_epoch=max(1, num_train//batch_size),
+                            validation_data=data_generator_wrapper(val_lines, batch_size, input_shape, anchors, num_classes),
+                            validation_steps=max(1, num_val//batch_size),
+                            epochs=50,
+                            initial_epoch=0,
+                            workers=args.workers,
+                            callbacks=[logging, checkpoint])
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
 
     # Unfreeze and continue training, to fine-tune.
@@ -76,12 +78,13 @@ def _main(args):
 
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
         model.fit_generator(data_generator_wrapper(train_lines, batch_size, input_shape, anchors, num_classes),
-            steps_per_epoch=max(1, num_train//batch_size),
-            validation_data=data_generator_wrapper(val_lines, batch_size, input_shape, anchors, num_classes),
-            validation_steps=max(1, num_val//batch_size),
-            epochs=100,
-            initial_epoch=50,
-            callbacks=[logging, checkpoint, reduce_lr, early_stopping])
+                            steps_per_epoch=max(1, num_train//batch_size),
+                            validation_data=data_generator_wrapper(val_lines, batch_size, input_shape, anchors, num_classes),
+                            validation_steps=max(1, num_val//batch_size),
+                            epochs=100,
+                            initial_epoch=50,
+                            workers=args.workers,
+                            callbacks=[logging, checkpoint, reduce_lr, early_stopping])
         model.save_weights(log_dir + 'trained_weights_final.h5')
 
 
@@ -196,4 +199,5 @@ if __name__ == '__main__':
     parser.add_argument('--weights_path', type=str, required=True)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--freeze_backbone', action='store_true')
+    parser.add_argument('--workers', type=int, default=8)
     _main(parser.parse_args())
