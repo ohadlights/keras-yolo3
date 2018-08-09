@@ -99,7 +99,7 @@ class YoloSequence(Sequence):
         box_data = np.array(box_data)
         y_true = preprocess_true_boxes(box_data, self.input_shape, self.anchors, self.num_classes)
 
-        return image_data, y_true
+        return [image_data, *y_true], np.zeros(self.batch_size)
 
 
 '''
