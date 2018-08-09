@@ -66,7 +66,7 @@ def _main(args):
                             validation_data=data_generator_wrapper(val_lines, batch_size, input_shape, anchors, num_classes),
                             validation_steps=max(1, num_val//batch_size),
                             epochs=50,
-                            initial_epoch=0,
+                            initial_epoch=args.initial_epoch,
                             workers=args.workers,
                             use_multiprocessing=args.use_multiprocessing,
                             callbacks=[logging, checkpoint])
@@ -86,7 +86,7 @@ def _main(args):
                             validation_data=data_generator_wrapper(val_lines, batch_size, input_shape, anchors, num_classes),
                             validation_steps=max(1, num_val//batch_size),
                             epochs=100,
-                            initial_epoch=50,
+                            initial_epoch=args.initial_epoch,
                             workers=args.workers,
                             use_multiprocessing=args.use_multiprocessing,
                             callbacks=[logging, checkpoint, reduce_lr, early_stopping])
@@ -185,4 +185,5 @@ if __name__ == '__main__':
     parser.add_argument('--workers', type=int, default=8)
     parser.add_argument('--use_multiprocessing', action='store_true')
     parser.add_argument('--num_gpus', type=int, default=1)
+    parser.add_argument('--initial_epoch', type=int, default=0)
     _main(parser.parse_args())
