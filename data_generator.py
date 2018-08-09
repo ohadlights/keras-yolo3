@@ -2,7 +2,12 @@ import threading
 import numpy as np
 from yolo3.utils import get_random_data
 from yolo3.model import preprocess_true_boxes
+from keras.utils import Sequence
 
+
+'''
+Use generator!
+'''
 
 class threadsafe_iter:
     """Takes an iterator/generator and makes it thread-safe by
@@ -28,7 +33,7 @@ def threadsafe_generator(f):
     return g
 
 
-@threadsafe_generator
+# @threadsafe_generator
 def data_generator(annotation_lines, batch_size, input_shape, anchors, num_classes):
     '''data generator for fit_generator'''
     n = len(annotation_lines)
@@ -53,3 +58,28 @@ def data_generator_wrapper(annotation_lines, batch_size, input_shape, anchors, n
     n = len(annotation_lines)
     if n==0 or batch_size<=0: return None
     return data_generator(annotation_lines, batch_size, input_shape, anchors, num_classes)
+
+
+'''
+Use Sequence!
+'''
+
+
+class YoloSequence(Sequence):
+
+    def __init__(self, x_set, y_set, batch_size):
+        self.x, self.y = x_set, y_set
+        self.batch_size = batch_size
+
+    def __len__(self):
+        return int(np.ceil(len(self.x) / float(self.batch_size)))
+
+    def __getitem__(self, idx):
+        batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
+
+        # return np.array([
+        #     resize(imread(file_name), (200, 200))
+        #        for file_name in batch_x]), np.array(batch_y)
+
+        return None

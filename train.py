@@ -69,6 +69,7 @@ def _main(args):
                             initial_epoch=args.initial_epoch,
                             workers=args.workers,
                             use_multiprocessing=args.use_multiprocessing,
+                            max_queue_size=batch_size * 2,
                             callbacks=[logging, checkpoint])
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
 
@@ -89,6 +90,7 @@ def _main(args):
                             initial_epoch=args.initial_epoch,
                             workers=args.workers,
                             use_multiprocessing=args.use_multiprocessing,
+                            max_queue_size=batch_size * 2,
                             callbacks=[logging, checkpoint, reduce_lr, early_stopping])
         model.save_weights(log_dir + 'trained_weights_final.h5')
 
