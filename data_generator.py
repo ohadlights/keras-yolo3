@@ -61,7 +61,6 @@ Use Sequence!
 
 class YoloSequence(Sequence):
 
-    # def __init__(self, x_set, y_set, batch_size):
     def __init__(self, annotation_lines, batch_size, input_shape, anchors, num_classes):
         # self.x, self.y = x_set, y_set
         self.annotation_lines = annotation_lines
@@ -71,16 +70,9 @@ class YoloSequence(Sequence):
         self.num_classes = num_classes
 
     def __len__(self):
-        return int(np.ceil(len(self.annotation_lines) / float(self.batch_size)))
+        return int(np.floor(len(self.annotation_lines) / float(self.batch_size)))
 
     def __getitem__(self, idx):
-        # batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
-        # batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
-
-        # return np.array([
-        #     resize(imread(file_name), (200, 200))
-        #        for file_name in batch_x]), np.array(batch_y)
-
         if idx == 0:
             np.random.shuffle(self.annotation_lines)
 
