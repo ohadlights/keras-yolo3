@@ -14,6 +14,16 @@ from keras.regularizers import l2
 from yolo3.utils import compose
 
 
+def stack(tensors, axis=-1):
+    if axis < 0:
+        rank = len(tensors[0].get_shape()._dims)
+        if rank:
+            axis %= rank
+        else:
+            axis = 0
+    return K.stack(tensors, axis=axis)
+
+
 @wraps(Conv2D)
 def DarknetConv2D(*args, **kwargs):
     """Wrapper to set Darknet parameters for Convolution2D."""
@@ -374,7 +384,7 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=.5, print_loss=False):
 
         grid, raw_pred, pred_xy, pred_wh = yolo_head(yolo_outputs[l],
              anchors[anchor_mask[l]], num_classes, input_shape, calc_loss=True)
-        pred_box = K.stack([pred_xy, pred_wh])
+        pred_box = stack([pred_xy, pred_wh])
 
         # Darknet raw box to calculate loss.
         raw_true_xy = y_true[l][..., :2]*grid_shapes[l][::-1] - grid
