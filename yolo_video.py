@@ -1,7 +1,10 @@
-import sys
+import os
 import argparse
 from yolo import YOLO, detect_video
 from PIL import Image
+import numpy as np
+import cv2
+
 
 def detect_img(yolo):
     while True:
@@ -16,7 +19,20 @@ def detect_img(yolo):
             r_image.show()
     yolo.close_session()
 
+
+def detect_from_directory(yolo, directory):
+    for file in os.listdir(directory):
+        path = os.path.join(directory, file)
+        image = Image.open(path)
+        r_image = yolo.detect_image(image)
+        ImageNumpyFormat = np.asarray(r_image)[...,::-1]
+        cv2.imshow('Viewer', ImageNumpyFormat)
+        cv2.waitKey(0)
+    yolo.close_session()
+
+
 FLAGS = None
+
 
 if __name__ == '__main__':
     # class YOLO defines the default value, so suppress any default here
@@ -48,6 +64,11 @@ if __name__ == '__main__':
         '--image', default=False, action="store_true",
         help='Image detection mode, will ignore all positional arguments'
     )
+
+    parser.add_argument(
+        '--images_dir', type=str,
+        help='Image detection mode, will ignore all positional arguments'
+    )
     '''
     Command line positional arguments -- for video detection mode
     '''
@@ -63,7 +84,10 @@ if __name__ == '__main__':
 
     FLAGS = parser.parse_args()
 
-    if FLAGS.image:
+    if FLAGS.images_dir:
+        print("Images from directory mode")
+        detect_from_directory((YOLO(**vars(FLAGS))), FLAGS.images_dir)
+    elif FLAGS.image:
         """
         Image detection mode, disregard any remaining command line arguments
         """
