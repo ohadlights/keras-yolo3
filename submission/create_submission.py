@@ -38,7 +38,7 @@ def main(args):
                 width, height = image.size
                 detections = yolo.detect_image(image)
 
-                f.write(file.replace('.jpg', ''))
+                f.write('{},'.format(file.replace('.jpg', '')))
                 for d in detections:
                     d = [
                         class_descs[d[0]],
@@ -54,7 +54,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', default=r'X:\OpenImages\yolov3\train\trainep007-loss52.349-val_loss51.483.h5')
+    parser.add_argument('--model_path', default=r'X:\OpenImages\yolov3\train\trainep010-loss51.981-val_loss50.800.h5')
     parser.add_argument('--anchors_path', default='..\model_data\yolo_anchors.txt')
     parser.add_argument('--classes_path', default='..\model_data\oid_classes.txt')
     parser.add_argument('--images_dir', default=r'X:\OpenImages\images\challenge2018')
