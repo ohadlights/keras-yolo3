@@ -54,6 +54,7 @@ def _main(args):
 
     batch_size = args.batch_size
     steps_in_epoch = args.steps_in_epoch if args.steps_in_epoch else max(1, num_train//batch_size)
+    steps_in_val = args.steps_in_val if args.steps_in_val else max(1, num_val//batch_size) // 2
     learning_rate = args.learning_rate
 
     # Train with frozen layers first, to get a stable loss.
@@ -67,7 +68,7 @@ def _main(args):
         model.fit_generator(data_generator_wrapper(train_lines, batch_size, input_shape, anchors, num_classes),
                             steps_per_epoch=steps_in_epoch,
                             validation_data=data_generator_wrapper(val_lines, batch_size, input_shape, anchors, num_classes),
-                            validation_steps=max(1, num_val//batch_size) // 2,
+                            validation_steps=steps_in_val,
                             epochs=50,
                             initial_epoch=args.initial_epoch,
                             workers=args.workers,
@@ -88,7 +89,7 @@ def _main(args):
         model.fit_generator(data_generator_wrapper(train_lines, batch_size, input_shape, anchors, num_classes),
                             steps_per_epoch=steps_in_epoch,
                             validation_data=data_generator_wrapper(val_lines, batch_size, input_shape, anchors, num_classes),
-                            validation_steps=max(1, num_val//batch_size) // 2,
+                            validation_steps=steps_in_val,
                             epochs=100,
                             initial_epoch=args.initial_epoch,
                             workers=args.workers,
@@ -192,5 +193,6 @@ if __name__ == '__main__':
     parser.add_argument('--num_gpus', type=int, default=1)
     parser.add_argument('--initial_epoch', type=int, default=0)
     parser.add_argument('--steps_in_epoch', type=int)
+    parser.add_argument('--steps_in_val', type=int)
     parser.add_argument('--learning_rate', type=float, default=1e-4)
     _main(parser.parse_args())
