@@ -18,41 +18,42 @@ from yolo3.utils import letterbox_image
 import os
 from keras.utils import multi_gpu_model
 
-class YOLO(object):
-    _defaults = {
-        "model_path": 'model_data/yolo_weights.h5',
-        "anchors_path": 'model_data/yolo_anchors.txt',
-        "classes_path": 'model_data/coco_classes.txt',
-        "score" : 0.3,
-        "iou" : 0.45,
-        "model_image_size" : (416, 416),
-        "gpu_num" : 1,
-    }
 
-    @classmethod
-    def get_defaults(cls, n):
-        if n in cls._defaults:
-            return cls._defaults[n]
-        else:
-            return "Unrecognized attribute name '" + n + "'"
+'''
+--model
+X:\OpenImages\yolov3\train_tinyep005-loss56.723-val_loss56.368.h5
+--classes
+D:\Projects\OpenImagesChallenge\keras-yolo3\model_data\oid_classes.txt
+'''
 
-    def __init__(self, **kwargs):
-        self.__dict__.update(self._defaults) # set up default values
-        self.__dict__.update(kwargs) # and update with user overrides
-        self.class_names = self._get_class()
-        self.anchors = self._get_anchors()
+
+class Yolo():
+    def __init__(self, args):
+        self.model_path = args.model_path
+        self.score = args.score
+        self.iou = args.iou
+        self.gpu_num = args.gpu_num
+        self.model_image_size = (416, 416)
+
+        self.class_names = self._get_class(args.classes)
+        self.anchors = self._get_anchors(args.anchors)
+
         self.sess = K.get_session()
         self.boxes, self.scores, self.classes = self.generate()
 
-    def _get_class(self):
-        classes_path = os.path.expanduser(self.classes_path)
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.sess.close()
+
+    def _get_class(self, classes_path):
         with open(classes_path) as f:
             class_names = f.readlines()
         class_names = [c.strip() for c in class_names]
         return class_names
 
-    def _get_anchors(self):
-        anchors_path = os.path.expanduser(self.anchors_path)
+    def _get_anchors(self, anchors_path):
         with open(anchors_path) as f:
             anchors = f.readline()
         anchors = [float(x) for x in anchors.split(',')]
@@ -166,8 +167,6 @@ class YOLO(object):
         print(end - start)
         return image
 
-    def close_session(self):
-        self.sess.close()
 
 def detect_video(yolo, video_path, output_path=""):
     import cv2

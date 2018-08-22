@@ -1,9 +1,9 @@
 import os
-import argparse
-from yolo import YOLO, detect_video
 from PIL import Image
 import numpy as np
 import cv2
+from yolo import Yolo, detect_video
+from yolo_args import build_args
 
 
 def detect_img(yolo):
@@ -17,63 +17,47 @@ def detect_img(yolo):
         else:
             r_image = yolo.detect_image(image)
             r_image.show()
-    yolo.close_session()
 
 
-def detect_from_directory(yolo, directory):
-    for file in os.listdir(directory):
-        path = os.path.join(directory, file)
+def detect_from_files(yolo, files):
+    for path in files:
         image = Image.open(path)
         r_image = yolo.detect_image(image)
         ImageNumpyFormat = np.asarray(r_image)[...,::-1]
         cv2.imshow('Viewer', ImageNumpyFormat)
         cv2.waitKey(0)
-    yolo.close_session()
 
 
-FLAGS = None
+def detect_from_directory(yolo, directory):
+    files = [os.path.join(directory, file) for file in os.listdir(directory)]
+    detect_from_files(yolo, files)
+
+
+def detect_from_list(yolo, list_path, images_root_dir):
+    prefix = images_root_dir if images_root_dir else ''
+    files = [os.path.join(prefix, l.strip().split()[0]) for l in open(list_path).readlines()]
+    detect_from_files(yolo, files)
+
+
+def get_images_source(args):
+    if args.input == 'image':
+        return 'image'
+    if args.input.endswith('txt'):
+        return 'list'
+    else:
+        return 'directory'
 
 
 if __name__ == '__main__':
-    # class YOLO defines the default value, so suppress any default here
-    parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-    '''
-    Command line options
-    '''
-    parser.add_argument(
-        '--model', type=str,
-        help='path to model weight file, default ' + YOLO.get_defaults("model_path")
-    )
+    parser = build_args()
 
-    parser.add_argument(
-        '--anchors', type=str,
-        help='path to anchor definitions, default ' + YOLO.get_defaults("anchors_path")
-    )
+    parser.add_argument('--images_root_dir')
 
-    parser.add_argument(
-        '--classes', type=str,
-        help='path to class definitions, default ' + YOLO.get_defaults("classes_path")
-    )
-
-    parser.add_argument(
-        '--gpu_num', type=int,
-        help='Number of GPU to use, default ' + str(YOLO.get_defaults("gpu_num"))
-    )
-
-    parser.add_argument(
-        '--image', default=False, action="store_true",
-        help='Image detection mode, will ignore all positional arguments'
-    )
-
-    parser.add_argument(
-        '--images_dir', type=str,
-        help='Image detection mode, will ignore all positional arguments'
-    )
     '''
     Command line positional arguments -- for video detection mode
     '''
     parser.add_argument(
-        "--input", nargs='?', type=str,required=False,default='./path2your_video',
+        "--input", nargs='?', type=str, required=True, default='./path2your_video',
         help = "Video input path"
     )
 
@@ -82,20 +66,27 @@ if __name__ == '__main__':
         help = "[Optional] Video output path"
     )
 
-    FLAGS = parser.parse_args()
+    args = parser.parse_args()
 
-    if FLAGS.images_dir:
-        print("Images from directory mode")
-        detect_from_directory((YOLO(**vars(FLAGS))), FLAGS.images_dir)
-    elif FLAGS.image:
-        """
-        Image detection mode, disregard any remaining command line arguments
-        """
-        print("Image detection mode")
-        if "input" in FLAGS:
-            print(" Ignoring remaining command line arguments: " + FLAGS.input + "," + FLAGS.output)
-        detect_img(YOLO(**vars(FLAGS)))
-    elif "input" in FLAGS:
-        detect_video(YOLO(**vars(FLAGS)), FLAGS.input, FLAGS.output)
-    else:
-        print("Must specify at least video_input_path.  See usage with --help.")
+    images_source = get_images_source(args)
+
+    with Yolo(args) as yolo:
+
+        if images_source == 'directory':
+            print("Images from directory mode")
+            detect_from_directory(yolo, args.input)
+        elif images_source == 'list':
+            print("Images from list mode")
+            detect_from_list(yolo, args.input, args.images_root_dir)
+        elif images_source == 'image':
+            """
+            Image detection mode, disregard any remaining command line arguments
+            """
+            print("Image detection mode")
+            if "input" in args:
+                print(" Ignoring remaining command line arguments: " + args.input + "," + args.output)
+            detect_img(yolo)
+        # elif "input" in args:
+        #     detect_video(yolo, args.input, args.output)
+        else:
+            print("Must specify at least video_input_path.  See usage with --help.")
