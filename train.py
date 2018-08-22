@@ -54,6 +54,7 @@ def _main(args):
 
     batch_size = args.batch_size
     steps_in_epoch = args.steps_in_epoch if args.steps_in_epoch else max(1, num_train//batch_size)
+    learning_rate = args.learning_rate
 
     # Train with frozen layers first, to get a stable loss.
     # Adjust num epochs to your dataset. This step is enough to obtain a not bad model.
@@ -80,7 +81,7 @@ def _main(args):
     else:
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
-        model.compile(optimizer=Adam(lr=1e-4), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
+        model.compile(optimizer=Adam(lr=learning_rate), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
         print('Unfreeze all of the layers.')
 
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
@@ -191,4 +192,5 @@ if __name__ == '__main__':
     parser.add_argument('--num_gpus', type=int, default=1)
     parser.add_argument('--initial_epoch', type=int, default=0)
     parser.add_argument('--steps_in_epoch', type=int)
+    parser.add_argument('--learning_rate', type=float, default=1e-4)
     _main(parser.parse_args())
