@@ -17,6 +17,12 @@ from yolo3.model import yolo_body, tiny_yolo_body, yolo_loss
 from data_generator import data_generator_wrapper
 
 
+def get_input_shape(args):
+    # mist be multiple of 32, hw
+    shape = args.input_shape.split(',')
+    return int(shape[0]), int(shape[1])
+
+
 def _main(args):
     annotation_path_train = args.image_list_train
     annotation_path_val = args.image_list_val
@@ -27,7 +33,7 @@ def _main(args):
     num_classes = len(class_names)
     anchors = get_anchors(anchors_path)
 
-    input_shape = (416,416) # multiple of 32, hw
+    input_shape = get_input_shape(args)
 
     is_tiny_version = len(anchors) == 6  # default setting
     if is_tiny_version:
@@ -196,4 +202,5 @@ if __name__ == '__main__':
     parser.add_argument('--steps_in_epoch', type=int)
     parser.add_argument('--steps_in_val', type=int)
     parser.add_argument('--learning_rate', type=float, default=1e-4)
+    parser.add_argument('--input_shape', default='416,416', help='height,width')
     _main(parser.parse_args())
