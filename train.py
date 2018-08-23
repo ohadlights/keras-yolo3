@@ -29,7 +29,7 @@ def get_optimizer(args):
         return Adam(lr=args.learning_rate)
     else:
         print('SGD optimizer')
-        return SGD(lr=0.01, momentum=0.9, nesterov=True)
+        return SGD(lr=args.learning_rate, momentum=0.9, nesterov=True)
 
 
 def _main(args):
