@@ -9,7 +9,7 @@ import numpy as np
 import keras.backend as K
 from keras.layers import Input, Lambda
 from keras.models import Model
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from keras.utils.training_utils import multi_gpu_model
 
@@ -21,6 +21,15 @@ def get_input_shape(args):
     # mist be multiple of 32, hw
     shape = args.input_shape.split(',')
     return int(shape[0]), int(shape[1])
+
+
+def get_optimizer(args):
+    if args.optimizer == 'Adam':
+        print('Adam optimizer')
+        return Adam(lr=args.learning_rate)
+    else:
+        print('SGD optimizer')
+        return SGD(lr=0.01, momentum=0.9, nesterov=True)
 
 
 def _main(args):
@@ -62,7 +71,6 @@ def _main(args):
     batch_size = args.batch_size
     steps_in_epoch = args.steps_in_epoch if args.steps_in_epoch else max(1, num_train//batch_size)
     steps_in_val = args.steps_in_val if args.steps_in_val else max(1, num_val//batch_size) // 2
-    learning_rate = args.learning_rate
 
     # Train with frozen layers first, to get a stable loss.
     # Adjust num epochs to your dataset. This step is enough to obtain a not bad model.
@@ -89,7 +97,7 @@ def _main(args):
     else:
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
-        model.compile(optimizer=Adam(lr=learning_rate), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
+        model.compile(optimizer=get_optimizer(args), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
         print('Unfreeze all of the layers.')
 
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
@@ -203,4 +211,5 @@ if __name__ == '__main__':
     parser.add_argument('--steps_in_val', type=int)
     parser.add_argument('--learning_rate', type=float, default=1e-4)
     parser.add_argument('--input_shape', default='416,416', help='height,width')
+    parser.add_argument('--optimizer', default='Adam')
     _main(parser.parse_args())
