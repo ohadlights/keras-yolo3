@@ -2,6 +2,7 @@ import os
 import argparse
 import datetime
 from collections import defaultdict
+from submission.utils import parse_prediction_line
 
 
 def bb_intersection_over_union(box_a, box_b):
@@ -28,6 +29,10 @@ def bb_intersection_over_union(box_a, box_b):
     return iou
 
 
+def merge_predictions(all_boxes):
+    pass
+
+
 def main(args):
 
     # Collect data from submissions
@@ -39,13 +44,14 @@ def main(args):
         for l in content:
             info = l.strip().split(',')
             image_id = info[0]
-            image_to_boxes[image_id] += [info[1]]
+            image_to_boxes[image_id] += parse_prediction_line(info[1])
 
     # output merged submission
 
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    info_file = os.path.join('merged', current_time + '.txt')
-    submission_file = os.path.join('merged', current_time + '.csv')
+    output_file_name = args.output_file_name if args.output_file_name else \
+        datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    info_file = os.path.join('merged', output_file_name + '.txt')
+    submission_file = os.path.join('merged', output_file_name + '.csv')
 
     with open(info_file, 'w') as f:
         f.write('\n'.join(files))
@@ -54,10 +60,11 @@ def main(args):
         f.write('ImageId,PredictionString\n')
         for image_id, boxes in image_to_boxes.items():
             f.write('{},'.format(image_id))
-            f.write(' '.join(boxes))
+            f.write(' '.join([b.to_string() for b in boxes]))
             f.write('\n')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--output_file_name', default='test')
     main(parser.parse_args())
