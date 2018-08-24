@@ -1,7 +1,7 @@
 import os
 import argparse
 import cv2
-
+from submission.utils import parse_prediction_line
 
 def main(args):
 
@@ -13,14 +13,9 @@ def main(args):
         image = cv2.imread(path)
         h, w, _ = image.shape
 
-        for i in range(0, len(boxes_data), 6):
-            box = [
-                int(float(boxes_data[i+2]) * w),
-                int(float(boxes_data[i+3]) * h),
-                int(float(boxes_data[i+4]) * w),
-                int(float(boxes_data[i+5]) * h),
-            ]
-            image = cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), (0 ,255, 0), 2)
+        boxes = parse_prediction_line(boxes_data, w=w, h=h)
+        for box in boxes:
+            image = cv2.rectangle(image, (box.x_min, box.y_min), (box.x_max, box.y_max), (0, 255, 0), 2)
 
         cv2.imshow('Detections', image)
         cv2.waitKey(0)
