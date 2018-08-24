@@ -2,6 +2,7 @@ import os
 import argparse
 import datetime
 from collections import defaultdict
+from tqdm import tqdm
 from submission.utils import parse_prediction_line
 
 
@@ -29,8 +30,23 @@ def bb_intersection_over_union(box_a, box_b):
     return iou
 
 
+def match_iou(box, others):
+    for b in others:
+        if bb_intersection_over_union(box.get_rect(), b.get_rect()) > 0.9:
+            return True
+    return False
+
+
 def merge_predictions(all_boxes):
-    pass
+    all_boxes = sorted(all_boxes, key=lambda b: b.score, reverse=True)
+    boxes = []
+    used_boxes = defaultdict(list)
+    for b in all_boxes:
+        class_id = b.class_id
+        if not match_iou(b, used_boxes[class_id]):
+            boxes += [b]
+            used_boxes[class_id] += [b]
+    return boxes
 
 
 def main(args):
@@ -39,7 +55,7 @@ def main(args):
 
     files = list(filter(lambda f: f.endswith('.csv'), os.listdir('.')))
     image_to_boxes = defaultdict(list)
-    for f in files:
+    for f in tqdm(files):
         content = open(f).readlines()[1:]
         for l in content:
             info = l.strip().split(',')
@@ -58,9 +74,9 @@ def main(args):
 
     with open(submission_file, 'w') as f:
         f.write('ImageId,PredictionString\n')
-        for image_id, boxes in image_to_boxes.items():
+        for image_id, boxes in tqdm(image_to_boxes.items()):
             f.write('{},'.format(image_id))
-            f.write(' '.join([b.to_string() for b in boxes]))
+            f.write(' '.join([b.to_string() for b in merge_predictions(boxes)]))
             f.write('\n')
 
 

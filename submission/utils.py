@@ -7,6 +7,9 @@ class Box:
         self.x_max = x_max
         self.y_max = y_max
 
+    def get_rect(self):
+        return self.x_min, self.y_min, self.x_max, self.y_max
+
     def to_string(self):
         return ' '.join([str(a) for a in [self.class_id, self.score, self.x_min, self.y_min, self.x_max, self.y_max]])
 
