@@ -10,7 +10,7 @@ import keras.backend as K
 from keras.layers import Input, Lambda
 from keras.models import Model
 from keras.optimizers import Adam, SGD
-from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
+from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, Callback
 from keras.utils.training_utils import multi_gpu_model
 
 from yolo3.model import yolo_body, tiny_yolo_body, yolo_loss
@@ -30,6 +30,21 @@ def get_optimizer(args):
     else:
         print('SGD optimizer')
         return SGD(lr=args.learning_rate, momentum=0.9, nesterov=True)
+
+
+class WeightsSaver(Callback):
+    def __init__(self, n=10000):
+        super().__init__()
+        self.N = n
+        self.batch = 0
+
+    def on_batch_end(self, batch, logs=None):
+        if logs is None:
+            logs = {}
+        if self.batch % self.N == 0:
+            name = 'weights%08d.h5' % self.batch
+            self.model.save_weights(name)
+        self.batch += 1
 
 
 def _main(args):
@@ -59,6 +74,7 @@ def _main(args):
         monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1)
     early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=1)
+    weights_saver = WeightsSaver()
 
     prefix = args.images_dir + '/' if args.images_dir else ''
     with open(annotation_path_train) as f:
@@ -89,7 +105,7 @@ def _main(args):
                             workers=args.workers,
                             use_multiprocessing=args.use_multiprocessing,
                             max_queue_size=batch_size * 2,
-                            callbacks=[logging, checkpoint])
+                            callbacks=[logging, checkpoint, weights_saver])
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
 
     # Unfreeze and continue training, to fine-tune.
@@ -110,7 +126,7 @@ def _main(args):
                             workers=args.workers,
                             use_multiprocessing=args.use_multiprocessing,
                             max_queue_size=batch_size * 2,
-                            callbacks=[logging, checkpoint, reduce_lr, early_stopping])
+                            callbacks=[logging, checkpoint, reduce_lr, early_stopping, weights_saver])
         model.save_weights(log_dir + 'trained_weights_final.h5')
 
 
