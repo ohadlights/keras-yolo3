@@ -18,14 +18,35 @@ from functools import partial
 
 from PIL import Image
 from tqdm import tqdm
+import numpy as np
 
 from submission.yolo import Yolo
+from yolo3.utils import letterbox_image
 
 
-def load_image(path, yolo: Yolo):
+def preprocess_image(image, model_image_size, adjust_dims=True):
+    if model_image_size != (None, None):
+        assert model_image_size[0] % 32 == 0, 'Multiples of 32 required'
+        assert model_image_size[1] % 32 == 0, 'Multiples of 32 required'
+        boxed_image = letterbox_image(image, tuple(reversed(model_image_size)))
+    else:
+        new_image_size = (image.width - (image.width % 32),
+                          image.height - (image.height % 32))
+        boxed_image = letterbox_image(image, new_image_size)
+    image_data = np.array(boxed_image, dtype='float32')
+
+    # print(image_data.shape)
+    image_data /= 255.
+    if adjust_dims:
+        image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
+
+    return image_data
+
+
+def load_image(path, model_image_size):
     image = Image.open(path)
     width, height = image.size
-    image_data = yolo.preprocess_image(image)
+    image_data = preprocess_image(image, model_image_size)
     return image, image_data, width, height
 
 
@@ -39,7 +60,7 @@ def main(args):
 
     with Yolo(args.classes_path, args.anchors_path, args.model_path) as yolo:
 
-        load_image_func = partial(load_image, yolo=yolo)
+        load_image_func = partial(load_image, model_image_size=yolo.model_image_size)
 
         with open(output_path, 'w') as f, Pool(args.num_processes) as p:
             f.write('ImageId,PredictionString\n')
@@ -47,7 +68,7 @@ def main(args):
             files = os.listdir(args.images_dir)
             chunk_size = args.preprocess_chunk_size
 
-            for chunk in range(0, len(files), chunk_size):
+            for chunk in tqdm(range(0, len(files), chunk_size)):
                 chunk_flies = files[chunk:chunk+chunk_size]
                 chunk_paths = [os.path.join(args.images_dir, file) for file in chunk_flies]
                 chunk_images = p.map(load_image_func, chunk_paths)
@@ -73,11 +94,11 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', default=r"X:\OpenImages\yolov3\train_less_5k\ep001-loss48.013-val_loss49.634.h5")
+    parser.add_argument('--model_path', default=r"Y:\OpenImages\yolov3\models\train_group_5_of_5\ep001-loss33.294-val_loss32.247.h5")
     parser.add_argument('--anchors_path', default='..\model_data\yolo_anchors.txt')
     parser.add_argument('--classes_path', default='..\model_data\oid_classes.txt')
-    parser.add_argument('--images_dir', default=r'D:\Projects\OpenImagesChallenge\oid\challenge2018')
-    parser.add_argument('--class_descriptions_path', default=r'X:\OpenImages\docs\challenge-2018-class-descriptions-500.csv')
+    parser.add_argument('--images_dir', default=r'D:\FaceWS\keras-yolo3\challenge2018')
+    parser.add_argument('--class_descriptions_path', default=r'Y:\OpenImages\docs\challenge-2018-class-descriptions-500.csv')
     parser.add_argument('--preprocess_chunk_size', type=int, default=100)
-    parser.add_argument('--num_porcesses', type=int, default=5)
+    parser.add_argument('--num_processes', type=int, default=25)
     main(parser.parse_args())
