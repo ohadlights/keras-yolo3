@@ -23,7 +23,6 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--submission_file', default=r'merged\test.csv')
-    parser.add_argument('--images_dir',
-                        default=r'\\ger\ec\proj\ha\RSG\FacePublicDatasets\OpenImages\images\challenge2018')
+    parser.add_argument('--submission_file', default=r'merged\2018-08-24_20-10-00.csv')
+    parser.add_argument('--images_dir', default=r'D:\Projects\OpenImagesChallenge\oid\challenge2018')
     main(parser.parse_args())

@@ -32,7 +32,7 @@ def bb_intersection_over_union(box_a, box_b):
 
 def match_iou(box, others):
     for b in others:
-        if bb_intersection_over_union(box.get_rect(), b.get_rect()) > 0.9:
+        if bb_intersection_over_union(box.get_rect(), b.get_rect()) > 0.85:
             return True
     return False
 
@@ -53,7 +53,7 @@ def main(args):
 
     # Collect data from submissions
 
-    files = list(filter(lambda f: f.endswith('.csv'), os.listdir('.')))
+    files = list(filter(lambda f: f.endswith('.csv'), os.listdir('submission_files')))
     image_to_boxes = defaultdict(list)
     for f in tqdm(files):
         content = open(f).readlines()[1:]
@@ -82,5 +82,5 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--output_file_name', default='test')
+    parser.add_argument('--output_file_name')
     main(parser.parse_args())
