@@ -83,7 +83,7 @@ class Yolo:
                                            score_threshold=self.score, iou_threshold=self.iou)
         return boxes, scores, classes
 
-    def detect_image(self, image):
+    def preprocess_image(self, image, adjust_dims=True):
         if self.model_image_size != (None, None):
             assert self.model_image_size[0] % 32 == 0, 'Multiples of 32 required'
             assert self.model_image_size[1] % 32 == 0, 'Multiples of 32 required'
@@ -96,7 +96,13 @@ class Yolo:
 
         # print(image_data.shape)
         image_data /= 255.
-        image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
+        if adjust_dims:
+            image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
+
+        return image_data
+
+    def detect_image(self, image, image_data):
+        # image_data = self.preprocess_image(image)
 
         out_boxes, out_scores, out_classes = self.sess.run(
             [self.boxes, self.scores, self.classes],
@@ -105,8 +111,6 @@ class Yolo:
                 self.input_image_shape: [image.size[1], image.size[0]],
                 K.learning_phase(): 0
             })
-
-        # print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
 
         detections = []
 
@@ -127,3 +131,43 @@ class Yolo:
             detections += [(predicted_class, score, left, top, right, bottom)]
 
         return detections
+
+    def detect_images(self, images):
+        image = images[0]
+        image_data = []
+        for image in images:
+            image_data += [self.preprocess_image(image, adjust_dims=False)]
+        image_data = np.array(image_data)
+
+        out_boxes, out_scores, out_classes = self.sess.run(
+            [self.boxes, self.scores, self.classes],
+            feed_dict={
+                self.yolo_model.input: image_data,
+                self.input_image_shape: [image.size[1], image.size[0]],
+                K.learning_phase(): 0
+            })
+
+        all_detections = []
+        print(out_boxes)
+        print(out_boxes.shape)
+
+        for i, c in reversed(list(enumerate(out_classes))):
+            detections = []
+            all_detections += [detections]
+
+            predicted_class = self.class_names[c]
+            box = out_boxes[i]
+            score = out_scores[i]
+
+            # label = '{} {:.2f}'.format(predicted_class, score)
+
+            top, left, bottom, right = box
+            top = max(0, np.floor(top + 0.5).astype('int32'))
+            left = max(0, np.floor(left + 0.5).astype('int32'))
+            bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
+            right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
+            # print(label, (left, top), (right, bottom))
+
+            detections += [(predicted_class, score, left, top, right, bottom)]
+
+        return all_detections
