@@ -37,6 +37,8 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     '''random preprocessing for real-time data augmentation'''
     line = annotation_line.split()
     image = Image.open(line[0])
+    scale = 255. if len(np.array(image).shape) == 3 else 65535.
+    print(scale)
     iw, ih = image.size
     h, w = input_shape
     box = np.array([np.array(list(map(int,box.split(',')))) for box in line[1:]])
@@ -92,8 +94,6 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     hue = rand(-hue, hue)
     sat = rand(1, sat) if rand()<.5 else 1/rand(1, sat)
     val = rand(1, val) if rand()<.5 else 1/rand(1, val)
-    scale = 255. if len(np.array(image).shape) == 3 else 65535.
-    print(scale)
     x = rgb_to_hsv(np.array(image)/scale)
     x[..., 0] += hue
     x[..., 0][x[..., 0]>1] -= 1
