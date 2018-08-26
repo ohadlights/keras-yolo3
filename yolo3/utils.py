@@ -93,6 +93,7 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     sat = rand(1, sat) if rand()<.5 else 1/rand(1, sat)
     val = rand(1, val) if rand()<.5 else 1/rand(1, val)
     scale = 255. if len(image.shape) == 3 else 65535.
+    print(scale)
     x = rgb_to_hsv(np.array(image)/scale)
     x[..., 0] += hue
     x[..., 0][x[..., 0]>1] -= 1
