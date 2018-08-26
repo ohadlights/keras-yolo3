@@ -56,7 +56,7 @@ def main(args):
     files = list(filter(lambda f: f.endswith('.csv'), os.listdir('submission_files')))
     image_to_boxes = defaultdict(list)
     for f in tqdm(files):
-        content = open(f).readlines()[1:]
+        content = open(os.path.join('submission_files', f)).readlines()[1:]
         for l in content:
             info = l.strip().split(',')
             image_id = info[0]
