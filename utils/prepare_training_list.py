@@ -54,8 +54,8 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--class_description_path', default=r'X:\OpenImages\docs\challenge-2018-class-descriptions-500.csv')
-    parser.add_argument('--oid_annotations_csv_path', default=r'X:\OpenImages\docs\challenge-2018-train-annotations-bbox---no_val.csv')
-    parser.add_argument('--images_dir', default=r'X:\OpenImages\images\train')
+    parser.add_argument('--oid_annotations_csv_path', default=r'X:\OpenImages\docs\challenge-2018-train-annotations-bbox---val.csv')
+    parser.add_argument('--images_dir', default=r'X:\OpenImages\images\train_448')
     parser.add_argument('--linux_images_dir')  # , default='/mnt/face-public/OpenImages/images/train')
-    parser.add_argument('--output_list_path', default=r'D:\Projects\OpenImagesChallenge\keras-yolo3\data\image_list.txt')
+    parser.add_argument('--output_list_path', default=r'D:\Projects\OpenImagesChallenge\keras-yolo3\data\image_list_val_448.txt')
     main(parser.parse_args())

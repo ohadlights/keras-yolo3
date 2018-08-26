@@ -20,6 +20,14 @@ from tqdm import tqdm
 from submission.yolo import Yolo
 
 
+def get_files_list(args):
+    if args.images_list:
+        files = [l.strip().split()[0] for l in open(args.images_list).readlines()]
+    else:
+        files = os.listdir(args.images_dir)
+    return [os.path.join(args.images_dir, file) for file in files]
+
+
 def main(args):
 
     class_descs = {l[1]: l[0] for l in [l.strip().split(',') for l in open(args.class_descriptions_path).readlines()]}
@@ -33,13 +41,12 @@ def main(args):
         with open(output_path, 'w') as f:
             f.write('ImageId,PredictionString\n')
 
-            for file in tqdm(os.listdir(args.images_dir)):
-                path = os.path.join(args.images_dir, file)
+            for path in tqdm(get_files_list(args)):
                 image = Image.open(path)
                 width, height = image.size
                 detections = yolo.detect_image(image)
 
-                f.write('{},'.format(file.replace('.jpg', '')))
+                f.write('{},'.format(os.path.basename(path).replace('.jpg', '')))
                 for d in detections:
                     d = [
                         class_descs[d[0]],
@@ -55,9 +62,10 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', default=r"X:\OpenImages\yolov3\train_balanced\ep015-loss49.856-val_loss48.868.h5")
+    parser.add_argument('--model_path', default=r"X:\OpenImages\yolov3\models\z_stopped\train_group_5_of_5\ep002-loss32.206-val_loss31.743.h5")
     parser.add_argument('--anchors_path', default='..\model_data\yolo_anchors.txt')
     parser.add_argument('--classes_path', default='..\model_data\oid_classes.txt')
     parser.add_argument('--images_dir', default=r'D:\Projects\OpenImagesChallenge\oid\challenge2018')
+    parser.add_argument('--images_list')
     parser.add_argument('--class_descriptions_path', default=r'X:\OpenImages\docs\challenge-2018-class-descriptions-500.csv')
     main(parser.parse_args())

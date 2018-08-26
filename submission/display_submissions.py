@@ -3,6 +3,7 @@ import argparse
 import cv2
 from submission.utils import parse_prediction_line
 
+
 def main(args):
 
     content = [l.strip().split(',') for l in open(args.submission_file).readlines()[1:]]
@@ -23,6 +24,6 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--submission_file', default=r'merged\2018-08-24_20-10-00.csv')
+    parser.add_argument('--submission_file', default=r'merged\2018-08-26_08-58-02.csv')
     parser.add_argument('--images_dir', default=r'D:\Projects\OpenImagesChallenge\oid\challenge2018')
     main(parser.parse_args())
