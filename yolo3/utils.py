@@ -2,9 +2,11 @@
 
 from functools import reduce
 
-from PIL import Image
 import numpy as np
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
+import cv2
+from PIL import Image
+
 
 def compose(*funcs):
     """Compose arbitrarily many functions, evaluated left to right.
@@ -17,6 +19,7 @@ def compose(*funcs):
     else:
         raise ValueError('Composition of empty sequence not supported.')
 
+
 def letterbox_image(image, size):
     '''resize image with unchanged aspect ratio using padding'''
     iw, ih = image.size
@@ -25,20 +28,22 @@ def letterbox_image(image, size):
     nw = int(iw*scale)
     nh = int(ih*scale)
 
-    image = image.resize((nw,nh), Image.BICUBIC)
-    new_image = Image.new('RGB', size, (128,128,128))
+    image = cv2.resize(image, (nw,nh), interpolation=cv2.INTER_CUBIC)
+    new_image =  Image.new('RGB', size, (128,128,128))
     new_image.paste(image, ((w-nw)//2, (h-nh)//2))
     return new_image
+
 
 def rand(a=0, b=1):
     return np.random.rand()*(b-a) + a
 
+
 def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jitter=.3, hue=.1, sat=1.5, val=1.5, proc_img=True):
     '''random preprocessing for real-time data augmentation'''
     line = annotation_line.split()
-    image = Image.open(line[0])
-    scale = 255. if len(np.array(image).shape) == 3 else 65535.
-    print(scale)
+    image = cv2.imread(line[0])
+    pixel_scale = 255. if len(np.array(image).shape) == 3 else 65535.
+    print(pixel_scale)
     iw, ih = image.size
     h, w = input_shape
     box = np.array([np.array(list(map(int,box.split(',')))) for box in line[1:]])
@@ -52,7 +57,7 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
         dy = (h-nh)//2
         image_data=0
         if proc_img:
-            image = image.resize((nw,nh), Image.BICUBIC)
+            image = cv2.resize(image, (nw, nh), interpolation=cv2.INTER_CUBIC)
             new_image = Image.new('RGB', (w,h), (128,128,128))
             new_image.paste(image, (dx, dy))
             image_data = np.array(new_image)/255.
@@ -77,7 +82,7 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     else:
         nw = int(scale*w)
         nh = int(nw/new_ar)
-    image = image.resize((nw,nh), Image.BICUBIC)
+    image = cv2.resize(image, (nw,nh), interpolation=cv2.INTER_CUBIC)
 
     # place image
     dx = int(rand(0, w-nw))
@@ -88,13 +93,13 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
 
     # flip image or not
     flip = rand()<.5
-    if flip: image = image.transpose(Image.FLIP_LEFT_RIGHT)
+    if flip: image = cv2.flip(image, 1)
 
     # distort image
     hue = rand(-hue, hue)
     sat = rand(1, sat) if rand()<.5 else 1/rand(1, sat)
     val = rand(1, val) if rand()<.5 else 1/rand(1, val)
-    x = rgb_to_hsv(np.array(image)/scale)
+    x = rgb_to_hsv(np.array(image)/pixel_scale)
     x[..., 0] += hue
     x[..., 0][x[..., 0]>1] -= 1
     x[..., 0][x[..., 0]<0] += 1
