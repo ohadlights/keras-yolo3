@@ -57,17 +57,18 @@ def main(args):
                 for d in detections:
                     coco_class_id = coco_name_to_id[d[0]]
                     oid_id = id_map[coco_class_id]
-                    oid_class_name = oid_clases[oid_id]
-                    # print('{} -> {}'.format(d[0], oid_class_name))
-                    d = [
-                        class_descs[oid_class_name],
-                        d[1],
-                        d[2] / width,
-                        d[3] / height,
-                        d[4] / width,
-                        d[5] / height
-                    ]
-                    f.write('{} '.format(' '.join([str(a) for a in d])))
+                    if oid_id < 999:
+                        oid_class_name = oid_clases[oid_id]
+                        # print('{} -> {}'.format(d[0], oid_class_name))
+                        d = [
+                            class_descs[oid_class_name],
+                            d[1],
+                            d[2] / width,
+                            d[3] / height,
+                            d[4] / width,
+                            d[5] / height
+                        ]
+                        f.write('{} '.format(' '.join([str(a) for a in d])))
                 f.write('\n')
 
 
