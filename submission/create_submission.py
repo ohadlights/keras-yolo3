@@ -34,7 +34,10 @@ def main(args):
 
     with Yolo(args.classes_path, args.anchors_path, args.model_path) as yolo:
 
-        model_name = args.model_path.split('\\')[-2]
+        if args.linux:
+            model_name = args.model_path.split('/')[-2]
+        else:
+            model_name = args.model_path.split('\\')[-2]
         checkpoint_name = os.path.basename(args.model_path)
         output_path = os.path.join('submission_files', model_name + '_' + checkpoint_name.replace('.h5', '.csv'))
 
@@ -62,10 +65,11 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', default=r"X:\OpenImages\yolov3\models\z_stopped\train_group_5_of_5\ep002-loss32.206-val_loss31.743.h5")
+    parser.add_argument('--model_path', default=r"X:\OpenImages\yolov3\models\z_stopped\train_group_5_of_10\ep003-loss23.424-val_loss22.952.h5")
     parser.add_argument('--anchors_path', default='..\model_data\yolo_anchors.txt')
     parser.add_argument('--classes_path', default='..\model_data\oid_classes.txt')
     parser.add_argument('--images_dir', default=r'D:\Projects\OpenImagesChallenge\oid\challenge2018')
     parser.add_argument('--images_list')
     parser.add_argument('--class_descriptions_path', default=r'X:\OpenImages\docs\challenge-2018-class-descriptions-500.csv')
+    parser.add_argument('--linux', action='store_true')
     main(parser.parse_args())
