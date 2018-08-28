@@ -32,16 +32,16 @@ def main(args):
 
     class_descs = {l[1]: l[0] for l in [l.strip().split(',') for l in open(args.class_descriptions_path).readlines()]}
 
-    id_map = {int(l[0]): int(l[1]) for l in [l.strip().split(',') for l in open(r'..\model_data\coco_to_oid.txt').readlines()]}
+    id_map = {int(l[0]): int(l[1]) for l in [l.strip().split(',') for l in open(args.id_map_path).readlines()]}
 
-    coco_classes = [l.strip() for l in open(r'..\model_data\coco_classes.txt')]
+    coco_classes = [l.strip() for l in open(args.classes_path)]
     coco_name_to_id = {coco_classes[i].lower(): i for i in range(len(coco_classes))}
 
-    oid_clases = [l.strip() for l in open(r'..\model_data\oid_classes.txt')]
+    oid_clases = [l.strip() for l in open(args.oid_classes_path)]
 
     with Yolo(args.classes_path, args.anchors_path, args.model_path) as yolo:
 
-        model_name = args.model_path.split('\\')[-2]
+        model_name = args.model_path.split('/')[-2] if args.linux else args.model_path.split('\\')[-2]
         checkpoint_name = os.path.basename(args.model_path)
         output_path = os.path.join('submission_files', model_name + '_' + checkpoint_name.replace('.h5', '.csv'))
 
@@ -59,9 +59,10 @@ def main(args):
                     oid_id = id_map[coco_class_id]
                     if oid_id < 999:
                         oid_class_name = oid_clases[oid_id]
+                        class_desc = class_descs[oid_class_name] if oid_class_name in class_descs else oid_class_name
                         # print('{} -> {}'.format(d[0], oid_class_name))
                         d = [
-                            class_descs[oid_class_name],
+                            class_desc,
                             d[1],
                             d[2] / width,
                             d[3] / height,
@@ -74,10 +75,15 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', default=r'X:\OpenImages\yolov3\pre_trained\yolo_weights_coco.h5')
+    parser.add_argument('--model_path', default=r"X:\OpenImages\yolov3\models\no_coco_3_of_3\ep003-loss28.185-val_loss28.048.h5")
     parser.add_argument('--anchors_path', default='..\model_data\yolo_anchors.txt')
     parser.add_argument('--classes_path', default='..\model_data\coco_classes.txt')
     parser.add_argument('--images_dir', default=r'D:\Projects\OpenImagesChallenge\oid\challenge2018')
     parser.add_argument('--images_list')
     parser.add_argument('--class_descriptions_path', default=r'X:\OpenImages\docs\challenge-2018-class-descriptions-500.csv')
+    parser.add_argument('--linux', action='store_true')
+
+    parser.add_argument('--id_map_path', default=r'..\model_data\coco_to_oid.txt')
+    parser.add_argument('--oid_classes_path', default=r'..\model_data\oid_classes.txt')
+
     main(parser.parse_args())
